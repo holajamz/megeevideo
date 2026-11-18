@@ -15,7 +15,7 @@ import { useCallback, useState } from 'react';
 import {
   FileText, Loader, AlertTriangle, CheckCircle2, Film, Users,
   ChevronRight, ChevronDown, Camera, Sun, Clock, ArrowLeft,
-  ArrowRight, Clapperboard, MapPin, Edit3, Save, X,
+  ArrowRight, Clapperboard, MapPin, Edit3, Save, X, Trash2, Package,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DeterministicAnalyzer } from '@/lib/screenplay/analyzer';
@@ -111,6 +111,14 @@ export function ScreenplayImporter({
         shots: s.shots.map((sh, j) => j === shotIdx ? { ...sh, ...patch } : sh),
       };
     }));
+  };
+
+  const removeScene = (idx: number) => {
+    setScenes((prev) => prev
+      .filter((_, i) => i !== idx)
+      .map((s, i) => ({ ...s, sceneNumber: i + 1 })));
+    setExpandedScene(null);
+    setEditingScene(null);
   };
 
   const updateMatch = (name: string, characterId: string | null) => {
@@ -311,6 +319,24 @@ export function ScreenplayImporter({
           </div>
         )}
 
+        {/* Props & continuity (detection is rule-based word matching; an AI provider would find subtler props and wardrobe details) */}
+        {result.analysis.props.length > 0 && (
+          <div className="bg-surface-2/60 border border-border/40 rounded-xl2 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" />
+              <h4 className="text-sm font-semibold text-fg">Props &amp; continuity</h4>
+            </div>
+            <p className="text-xs text-fg-subtle">Recurring items detected in the action lines. Track these across scenes to avoid continuity breaks between shots.</p>
+            <div className="flex flex-wrap gap-1.5">
+              {result.analysis.props.map((p) => (
+                <span key={p.name} className="text-[10px] px-2 py-0.5 rounded-full bg-surface-hover/60 text-fg-subtle">
+                  {p.name} · scenes {p.scenes.join(', ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Scene/Shot list */}
         <div className="space-y-2">
           {scenes.map((scene, sIdx) => {
@@ -336,6 +362,13 @@ export function ScreenplayImporter({
                     <span className="flex items-center gap-1"><Sun className="w-3 h-3" />{scene.timeOfDay}</span>
                     <span className="flex items-center gap-1"><Camera className="w-3 h-3" />{scene.shots.length} shots</span>
                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />~{scene.estimatedDurationSeconds}s</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removeScene(sIdx); }}
+                      title="Remove scene — use this if the parser split one scene into two"
+                      className="ml-1 text-fg-faint hover:text-error transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 

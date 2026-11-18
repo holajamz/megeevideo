@@ -23,7 +23,6 @@ const SCENE_HEADING_RE = /^(INT\.|EXT\.|INT\.\/EXT\.|INT\/EXT\.|I\/E\.)\s+(.+)$/
 const TRANSITION_RE = /^(CUT TO:|FADE TO:|FADE IN:|FADE OUT\.|SMASH CUT:|DISSOLVE TO:|MATCH CUT:|JUMP CUT:|WIPE TO:|IRIS OUT\.|INTERCUT:)/i;
 const PARENTHETICAL_RE = /^\((.+)\)$/;
 const VOICEOVER_RE = /\(?(V\.?O\.?|VOICE\s*OVER)\)?$/i;
-const OFFSCREEN_RE = /\(?(O\.?S\.?|O\.?C\.?|OFF\s*SCREEN|OFF\s*CAMERA)\)?$/i;
 
 function parseTimeOfDay(raw: string): TimeOfDay {
   const lower = raw.toLowerCase().trim();
@@ -85,12 +84,6 @@ const COMMON_PROPS = [
   'cup', 'door', 'window', 'mirror', 'clock', 'watch', 'wallet',
   'badge', 'flashlight', 'radio', 'microphone', 'guitar', 'piano',
 ];
-
-const COMMON_LOCATION_WORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to',
-  'of', 'with', 'into', 'through', 'across', 'under', 'over',
-  'is', 'are', 'was', 'were', 'he', 'she', 'it', 'they', 'we',
-]);
 
 function extractProps(actionLines: string[], sceneNumber: number, props: Map<string, number[]>): void {
   const text = actionLines.join(' ').toLowerCase();
@@ -206,11 +199,10 @@ export function parseScreenplay(text: string): ScreenplayAnalysis {
       if (isCharacterCue(line, nextLine)) {
         const rawSpeaker = line;
         const isVO = VOICEOVER_RE.test(rawSpeaker);
-        const isOS = OFFSCREEN_RE.test(rawSpeaker);
         const speaker = cleanSpeaker(rawSpeaker);
 
         let parenthetical: string | undefined;
-        let dialogueText: string[] = [];
+        const dialogueText: string[] = [];
         i++;
         while (i < trimmedLines.length) {
           const d = trimmedLines[i];
